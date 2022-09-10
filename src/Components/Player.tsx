@@ -17,9 +17,14 @@ export const Player = ({ id, isDisabled, updateValue, parentCallBack }: PlayerPr
 
   const onChangeHandler = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setInput(e.target.value)
+
+    if(!updateValue) {
+      parentCallBack(e.target.value)
+    }
   }
 
   if(updateValue) {
+    console.log(updateValue)
     setInput(updateValue)
   }
 
@@ -28,10 +33,7 @@ export const Player = ({ id, isDisabled, updateValue, parentCallBack }: PlayerPr
     disabled = {isDisabled}
     placeholder='DO IT'
     value={input}
-    onChange={(e) => {
-      onChangeHandler(e)
-      parentCallBack(e.target.value)
-      }}
+    onChange={onChangeHandler}
     />
   )
 }

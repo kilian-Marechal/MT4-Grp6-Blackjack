@@ -45,7 +45,7 @@ const Home: NextPage = () => {
       console.log(total)
     })
 
-    socket.on('playersID', (serverPlayers: {}) => {
+    socket.on('players', (serverPlayers: {}) => {
       const ids: string[] = Object.keys(serverPlayers)
       setPlayersID(ids)
     })
@@ -98,7 +98,7 @@ const Home: NextPage = () => {
       </div>
       <div className='containerPlayer'>
         {playersID.map((playerID: string): any => {
-          return (<Player isDisabled={socket.id != playerID} id={playerID} updateValue={socket.id != playerID ? inputUpdate : null} parentCallBack={parentCallBack} />)
+          return (<Player id={playerID} isDisabled={socket.id != playerID} updateValue={socket.id != playerID ? inputUpdate : null} parentCallBack={parentCallBack} />)
         })}
       </div>
     </div>
