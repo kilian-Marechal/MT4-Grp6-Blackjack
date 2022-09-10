@@ -21,7 +21,7 @@ const SocketHandler = (req: Request, res: any) => {
       // socket.emit('getCount', total)
       
       if(players[socket.id] == undefined) {
-        players[socket.id] = {socketID : socket.id};
+        players[socket.id] = {socketID : socket.id,  inputValue : ""};
         io.emit('players', players)
         console.log(players)
       }

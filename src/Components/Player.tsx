@@ -7,33 +7,39 @@ interface PlayerProps {
   id: string,
   isDisabled: boolean,
   updateValue?: string | null,
-  parentCallBack: any
+  inputChanges: any
 }
 
-export const Player = ({ id, isDisabled, updateValue, parentCallBack }: PlayerProps) => {
+export const Player = ({ id, isDisabled, updateValue, inputChanges }: PlayerProps) => {
 
   const [isConnected, setIsConnected] = useState(false)
   const [input, setInput] = useState("")
+  const sendButton = document.querySelector('.sendButton')
 
   const onChangeHandler = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setInput(e.target.value)
-
-    if(!updateValue) {
-      parentCallBack(e.target.value)
-    }
   }
 
   if(updateValue) {
-    console.log(updateValue)
     setInput(updateValue)
   }
 
+  if(sendButton) {
+    sendButton.addEventListener('click', () => {
+      inputChanges(input)
+    })
+  }
+
   return (
-    <input
-    disabled = {isDisabled}
-    placeholder='DO IT'
-    value={input}
-    onChange={onChangeHandler}
-    />
+    <div>
+      <input
+      className = 'inputText'
+      disabled = {isDisabled}
+      placeholder ='DO IT'
+      value = {input}
+      onChange = {onChangeHandler}
+      />
+      <button className = 'sendButton'>Envoyer message</button>
+    </div>
   )
 }

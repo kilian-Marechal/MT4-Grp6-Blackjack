@@ -41,9 +41,9 @@ const Home: NextPage = () => {
       console.log(socket.id)
     })
 
-    socket.on('getCount', (total: number) => {
-      console.log(total)
-    })
+    // socket.on('getCount', (total: number) => {
+    //   console.log(total)
+    // })
 
     socket.on('players', (serverPlayers: {}) => {
       const ids: string[] = Object.keys(serverPlayers)
@@ -51,12 +51,13 @@ const Home: NextPage = () => {
     })
 
     socket.on('update-input', (msg: string) => {
+      // console.log('flood')
       setInputUpdate(msg)
     })
   }
 
   const parentCallBack = (EventString: string): void => {
-    console.log(EventString)
+    console.log("EventString "  + EventString)
     socket.emit('input-change', EventString)
   }
 
@@ -98,7 +99,7 @@ const Home: NextPage = () => {
       </div>
       <div className='containerPlayer'>
         {playersID.map((playerID: string): any => {
-          return (<Player id={playerID} isDisabled={socket.id != playerID} updateValue={socket.id != playerID ? inputUpdate : null} parentCallBack={parentCallBack} />)
+          return (<Player id={playerID} isDisabled={socket.id != playerID} updateValue={socket.id != playerID ? inputUpdate : null} inputChanges={parentCallBack} />)
         })}
       </div>
     </div>
