@@ -9,7 +9,7 @@ interface CardProps {
 
 export const Card = (props: CardProps) => {
 
-  const {rank, suit } = props;
+  const { rank, suit } = props;
   
   return <StyledCard suit={suit}>
             <p>{rank}</p>
