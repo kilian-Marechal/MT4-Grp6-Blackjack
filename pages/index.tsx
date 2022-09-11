@@ -62,10 +62,7 @@ const Home: NextPage = () => {
       const updatePlayer = draw.drawPlayer;
       const playersObj = draw.playersObj;
 
-      // (playersObj as any)[updatePlayer.socketID] = updatePlayer;
-      (playersObj as any)[updatePlayer.socketID].draw = updatePlayer.draw;
-      (playersObj as any)[updatePlayer.socketID].cards.push(updatePlayer.pickedCard);
-      (playersObj as any)[updatePlayer.socketID].cardsValue += updatePlayer.cardValue;
+      (playersObj as any)[updatePlayer.socketID] = updatePlayer;
 
       console.log(playersObj)
       setPlayers(playersObj)

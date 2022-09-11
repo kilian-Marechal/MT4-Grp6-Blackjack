@@ -18,6 +18,8 @@ export default (req: NextApiRequest, res: NextApiResponseServerIO) => {
         if(draw.playersObj[draw.drawPlayer.socketID].cards.find((card: string,{}) => (card as any).rank == 'Ace') != undefined) {
           hasAce = true;
         }
+
+        cardValue += draw.playersObj[draw.drawPlayer.socketID].cardsValue;
       }
       
       switch(pickedCardRank) {
