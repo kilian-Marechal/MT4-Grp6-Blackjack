@@ -28,7 +28,7 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseServerIO) => {
 
     io.on('connection', (socket: any) => {      
       if(players[socket.id] == undefined) {
-        players[socket.id] = {socketID : socket.id, draw: false};
+        players[socket.id] = {socketID : socket.id, draw: false, cards: [], cardsValue: 0};
         io.emit('players', players)
         console.log(players)
       }

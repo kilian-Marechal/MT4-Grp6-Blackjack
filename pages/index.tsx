@@ -12,7 +12,9 @@ let socket: any
 interface playerInterface {
   socketID: string;
   draw: boolean;
-  playersObj?: any
+  cards?: {}[];
+  cardsValue?: number,
+  playersObj?: {}
 }
 
 const Home: NextPage = () => {
@@ -26,7 +28,7 @@ const Home: NextPage = () => {
   const [dealerCount, setDealerCount] = useState(0)
   const [playersCards, setPlayersCards] = useState([])
   const [playerCount, setPlayerCount] = useState(0)
-  const [players, setPlayers] = useState<playerInterface>({socketID: "", draw: false})
+  const [players, setPlayers] = useState<playerInterface>({socketID: "", draw: false, cards: [], cardsValue: 0})
   const [playersID, setPlayersID] = useState<string[]>([])
   const [isBlackjack, setIsBlackJack] = useState(false)
   const [isPlayerBusted, setIsPlayerBusted] = useState(false)
@@ -60,8 +62,12 @@ const Home: NextPage = () => {
       const updatePlayer = draw.drawPlayer;
       const playersObj = draw.playersObj;
 
+      // (playersObj as any)[updatePlayer.socketID] = updatePlayer;
       (playersObj as any)[updatePlayer.socketID].draw = updatePlayer.draw;
+      (playersObj as any)[updatePlayer.socketID].cards.push(updatePlayer.pickedCard);
+      (playersObj as any)[updatePlayer.socketID].cardsValue += updatePlayer.cardValue;
 
+      console.log(playersObj)
       setPlayers(playersObj)
     })
 
@@ -70,7 +76,7 @@ const Home: NextPage = () => {
     // })
   }
 
-  const drawCard = async (socketID: string, draw: boolean, playersObj: any) => {
+  const drawCard = async (socketID: string, draw: boolean, playersObj: playerInterface) => {
     console.log("into the draw")
 
     const drawPlayer: playerInterface = {
@@ -88,7 +94,7 @@ const Home: NextPage = () => {
     });
 
     if (resp.ok) {
-      console.log(players)
+      console.log("resp ok")
     } else {
       console.log("resp is not okay")
     }
