@@ -12,6 +12,7 @@ let socket: any
 interface playerInterface {
   socketID: string;
   draw: boolean;
+  playersObj?: any
 }
 
 const Home: NextPage = () => {
@@ -56,9 +57,14 @@ const Home: NextPage = () => {
       setPlayers(serverPlayers)
     })
 
-    socket.on('drawPlayer', (drawPlayer: playerInterface) => {
-      console.log(players);
-      console.log(drawPlayer.socketID);
+    socket.on('drawPlayer', (draw: any) => {
+      const updatePlayer = draw.drawPlayer;
+      const playersObj = draw.playersObj;
+
+      (playersObj as any)[updatePlayer.socketID].draw = updatePlayer.draw;
+
+      setPlayers(playersObj)
+
       // (players as any)[drawPlayer.socketID].draw = drawPlayer.draw;
     })
 
@@ -67,14 +73,12 @@ const Home: NextPage = () => {
     // })
   }
 
-  const drawCard = async (socketID: string) => {
+  const drawCard = async (socketID: string, draw: boolean, playersObj: any) => {
     console.log("into the draw")
-    console.log(players)
-    setDraw(true)
 
     const drawPlayer: playerInterface = {
       socketID,
-      draw
+      draw,
     }
 
     // Dispatch draw to other users
@@ -83,22 +87,20 @@ const Home: NextPage = () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(drawPlayer),
+      body: JSON.stringify({drawPlayer, playersObj}),
     });
 
-    // reset field if OK
     if (resp.ok) {
-      // setDraw(false);
-      setButtonText("true")
+      console.log(players)
     } else {
       setButtonText("resp is not okay")
     }
   };
 
-  const noDrawCard = async (playerID: string) => {
-    console.log("into the No Draw")
-    console.log(playerID)
-    setButtonText("false")
+  const noDrawCard = async (socketID?: string, draw?: boolean) => {
+    // console.log("into the No Draw")
+    // console.log(socketID)
+    // setButtonText("false")
   };
 
   // const parentCallBack = (EventString: string): void => {
@@ -145,20 +147,18 @@ const Home: NextPage = () => {
       <div className='containerPlayer'>
         {playersID.map((playerID: string): any => {
             return (<div>
-              <p>{(players as any)[playerID].draw ? "true" : "false"}</p>
+              <p>{(players as any)[playerID].draw.toString()}</p>
               <button
               className={playerID}
-              value="draw"
               disabled={socket.id != playerID}
               onClick={() => {
-                drawCard(socket.id);
+                drawCard(socket.id, true, players);
               }}>Draw</button>
               <button
               className={playerID}
-              value="No draw"
               disabled={socket.id != playerID}
               onClick={() => {
-                noDrawCard(socket.id);
+                noDrawCard(socket.id, false);
               }}>No draw</button>
             </div>
             )}
