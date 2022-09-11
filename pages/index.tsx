@@ -37,7 +37,6 @@ const Home: NextPage = () => {
   const [winner, setWinner] = useState("")
   const [inputUpdate, setInputUpdate] = useState("")
   const [draw, setDraw] = useState(false)
-  const [buttonText, setButtonText] = useState("")
 
   useEffect(() => {
     socketInitializer()
@@ -64,8 +63,6 @@ const Home: NextPage = () => {
       (playersObj as any)[updatePlayer.socketID].draw = updatePlayer.draw;
 
       setPlayers(playersObj)
-
-      // (players as any)[drawPlayer.socketID].draw = drawPlayer.draw;
     })
 
     // socket.on('update-input', (msg: string) => {
@@ -93,14 +90,9 @@ const Home: NextPage = () => {
     if (resp.ok) {
       console.log(players)
     } else {
-      setButtonText("resp is not okay")
+      console.log("resp is not okay")
     }
-  };
 
-  const noDrawCard = async (socketID?: string, draw?: boolean) => {
-    // console.log("into the No Draw")
-    // console.log(socketID)
-    // setButtonText("false")
   };
 
   // const parentCallBack = (EventString: string): void => {
@@ -158,7 +150,7 @@ const Home: NextPage = () => {
               className={playerID}
               disabled={socket.id != playerID}
               onClick={() => {
-                noDrawCard(socket.id, false);
+                drawCard(socket.id, false, players);
               }}>No draw</button>
             </div>
             )}
