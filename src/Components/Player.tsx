@@ -12,34 +12,49 @@ interface PlayerProps {
 
 export const Player = ({ id, isDisabled, updateValue, inputChanges }: PlayerProps) => {
 
-  const [isConnected, setIsConnected] = useState(false)
   const [input, setInput] = useState("")
-  const sendButton = document.querySelector('.sendButton')
+  const [inputValue, setInputValue] = useState("")
+  const inputText = document.querySelector('.inputText')
 
   const onChangeHandler = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setInput(e.target.value)
   }
 
   if(updateValue) {
-    setInput(updateValue)
+    setInputValue(updateValue)
   }
 
-  if(sendButton) {
-    sendButton.addEventListener('click', () => {
-      inputChanges(input)
-    })
+  const clickButton = () => {
+    console.log('pute')
+    inputChanges((inputText as any).value)
   }
 
   return (
     <div>
-      <input
+      {updateValue ? 
+      (<input
+      disabled = {isDisabled}
+      placeholder ='DO IT'
+      value = {inputValue}
+      />)
+      : (<input
       className = 'inputText'
       disabled = {isDisabled}
       placeholder ='DO IT'
       value = {input}
       onChange = {onChangeHandler}
       />
-      <button className = 'sendButton'>Envoyer message</button>
+      )}
+      {/* <input
+      className = 'inputText'
+      disabled = {isDisabled}
+      placeholder ='DO IT'
+      value = {!updateValue ? input : inputValue}
+      onChange = {(e) => {
+        setInput(e.target.value)
+      }}
+      /> */}
+      <button disabled = {isDisabled} onClick={clickButton}>Envoyer message</button>
     </div>
   )
 }
