@@ -2,10 +2,9 @@ import type { NextPage } from 'next'
 import React, { useState, useEffect, useRef } from "react";
 import Head from 'next/head'
 import Image from 'next/image'
-import styles from '../styles/Home.module.css'
+import styles from '../styles/Home.module.scss'
 import { Card } from '../src/Components/Card'
 import { Button } from '../src/Components/Button'
-import { Player } from '../src/Components/Player'
 import { io } from "socket.io-client"
 // import SocketIOClient from "socket.io-client";
 let socket: any
@@ -35,7 +34,6 @@ interface interfaceDrawPlayer {
   pickedCard: {} | any, 
   cardsValue: number
 }
-
 
 const Home: NextPage = () => {
   // Game Logic
@@ -288,22 +286,31 @@ const Home: NextPage = () => {
   // console.log("playDecks :", playDecks[0])
 
   return (
-    <div>
+    <div className={styles.main}>
       <div className={styles.container}>
-        <button disabled={gameStarted} onClick={startGame}>Start the game</button>
-        <Card rank={"10"} suit={"Hearts"} />
+        {!gameStarted ? (
+          <button className={`${styles.startButton} ${styles.toStart}`} onClick={startGame}>Start the game</button>
+        ) : (
+          <button className={`${styles.startedButton} ${styles.startButton}`} disabled={gameStarted}>Game Started !</button>
+        )}
+        
       </div>
-      <div className='containerPlayer'>
-        {playersID.map((playerID: string): any => {
+      <div className={styles.playersContainer}>
+        {playersID.map((playerID: string, index): any => {
           return (
-            <div>
-              <p>Cards Value : {(players as any)[playerID].cardsValue.toString()}</p>
-              <p>Cards Value : {(players as any)[playerID].socketID}</p>
+            <div className={styles.playerSubContainer}>
+              <p>Player : {index}</p>
+              <div className={styles.cardsContainer}>
+                {(players as any)[playerID].cards.map((card: {suit:string, rank:string}): any => {
+                  return (<Card playerID={playerID} index={index} suit={card.suit} rank={card.rank}/>)
+                })}
+              </div>
+              <p>Total Value : {(players as any)[playerID].cardsValue.toString()}</p>
               <div>
-                <Button playerID={playerID} bet={50} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 50, players)} />
-                <Button playerID={playerID} bet={100} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 100, players)} />
-                <Button playerID={playerID} bet={200} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 200, players)} />
-                <Button playerID={playerID} bet={500} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 500, players)} />
+                <Button playerID={playerID} playerBet={(players as any)[playerID].bet} bet={50} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 50, players)} />
+                <Button playerID={playerID} playerBet={(players as any)[playerID].bet} bet={100} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 100, players)} />
+                <Button playerID={playerID} playerBet={(players as any)[playerID].bet} bet={200} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 200, players)} />
+                <Button playerID={playerID} playerBet={(players as any)[playerID].bet} bet={500} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 500, players)} />
               </div>
               <Button playerID={playerID} draw={true} disabled={(socket.id != playerID || !everyPlayerBet || canPlay)} functionTriggered={() => drawCard(socket.id, true, players)} />
               <Button playerID={playerID} draw={false} disabled={(socket.id != playerID || !everyPlayerBet || canPlay)} functionTriggered={() => drawCard(socket.id, false, players)} />

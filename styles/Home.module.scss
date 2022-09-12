@@ -1,0 +1,87 @@
+.main {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    background: url("https://fr.freepik.com/photos-premium/texture-transparente-couverture-verte-table-poker_14208381.htm");
+
+    .startButton {
+        margin-top: 10vh;
+        margin-bottom: 64px;
+        font-size: 24px;
+        text-align: center;
+        display: inline-block;
+        font-weight: bold;
+        padding: 12px 12px 12px 12px;
+        background-color: lightgray;
+        text-shadow: -1px -1px black, 1px 1px white;
+        color: gray;
+        border-radius: 7px;
+        box-shadow: 0 0.2em grey;
+        cursor: pointer;
+    }
+    .toStart {
+        &:active {
+            box-shadow: none;
+            position: relative;
+            top: .2em;
+        }
+    }
+    .startedButton {
+        cursor:default !important;
+        box-shadow: none !important;
+    }
+
+    .gameButton {
+        text-shadow: 1px 1px pink, -1px -1px maroon;
+        line-height: 1.5em;
+        text-align: center;
+        display: inline-block;
+        width: 1.5em;
+        -webkit-border-radius: .75em;
+        -moz-border-radius: .75em;
+        -o-border-radius: .75em;
+            border-radius: .75em;
+        background-color: red;
+        -webkit-box-shadow:  0 .2em maroon;
+        -moz-box-shadow:  0 .2em maroon;
+        -o-box-shadow:  0 .2em maroon;
+        box-shadow:  0 .2em maroon;
+        color: red;
+        margin: 5px;
+        background-color: red;
+        background-image: -o-linear-gradient(left top, pink 3%, red 22%, maroon 99%);
+        background-image: -moz-linear-gradient(left top, pink 3%, red 22%, maroon 99%);
+        background-image: -webkit-linear-gradient(left top, pink 3%, red 22%, maroon 99%);
+        background-image: linear-gradient(left top, pink 3%, red 22%, maroon 99%);
+        cursor: pointer;
+        padding-left: 5px;
+    }
+
+    .playersContainer {
+        display: grid;
+        grid-template-columns: 25% 25% 25% 25%;
+        justify-content: center;
+        align-items: flex-end;
+        width: 100%;
+        border: 3px solid black;
+        border-radius: 10px;
+    
+        .playerSubContainer {
+            width: 100%;
+            padding: 2% 2% 2% 4%;
+            border-right: 1px solid black;
+    
+            .cardsContainer {
+                height: 250px;
+                display: flex;
+                justify-content: flex-start;
+                align-items: center;
+            }
+        }
+    }
+}
