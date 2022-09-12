@@ -9,8 +9,8 @@ export default (req: NextApiRequest, res: NextApiResponseServerIO) => {
     const suits = ['Diamonds','Hearts','Spades','Clubs'];
     const ranks = ['Ace','2','3','4','5','6','7','8','9','10','Jack','Queen','King'] 
 
-    const calculateValue = () => {
-      const pickedCardRank = dealerData.pickedCard.rank;
+    const calculateValue = (valueToCalculate: string) => {
+      // const pickedCardRank = dealerData.pickedCard.rank;
       let cardValue: number = 0;
       let hasAce: boolean = false;
 
@@ -20,7 +20,7 @@ export default (req: NextApiRequest, res: NextApiResponseServerIO) => {
         }
       }
       
-      switch(pickedCardRank) {
+      switch(valueToCalculate) {
         case 'Ace':
           hasAce ? cardValue = 10 : cardValue = 1;
           break;
@@ -34,7 +34,7 @@ export default (req: NextApiRequest, res: NextApiResponseServerIO) => {
         case '8':
         case '9':
         case '10':
-          cardValue = parseInt(pickedCardRank);
+          cardValue = parseInt(valueToCalculate);
           break;
 
         case 'Jack':
@@ -56,21 +56,17 @@ export default (req: NextApiRequest, res: NextApiResponseServerIO) => {
       dealerData.pickedCard = card;
       dealerData.cards.push(card);
 
-      // Value of player Cards
-      dealerData.cardsValue = calculateValue();
+      // // Value of player Cards
+      // dealerData.cardsValue += calculateValue();
     }
     randomDraw();
 
+    dealerData.cards.forEach((card: {suit: string, rank: string}) => {
+      dealerData.cardsValue += calculateValue(card.rank)
+    })
+
     // dispatch to channel "message"
     res?.socket?.server?.io?.emit("dealerTurn", dealerData);
-
-    // if(dealerData.cardsValue < 17) {
-    //   setInterval(() => {
-    //     randomDraw();
-
-    //     res?.socket?.server?.io?.emit("dealerTurn", dealerData);
-    //   }, 1500)
-    // }
 
     // return message
     res.status(201).json(dealerData);

@@ -5,7 +5,6 @@ import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 import { Card } from '../src/Components/Card'
 import { Button } from '../src/Components/Button'
-import { Player } from '../src/Components/Player'
 import { io } from "socket.io-client"
 let socket: any
 
@@ -29,8 +28,9 @@ const playerTemplate: playerInterface = {
 }
 
 interface dealerInterface {
-  cards?: {}[];
-  cardsValue?: number,
+  cards: {}[];
+  cardsValue: number,
+  hasLost?: boolean
 }
 
 interface interfaceDrawPlayer {
@@ -111,7 +111,7 @@ const Home: NextPage = () => {
         } else if(permission.indexPlayerToPlay > Object.keys(permission.playersObj).length) {
           // End of the game, dealer turn
           setCanPlay(!canPlay);
-          // dealerAI();
+          dealerAI();
 
           setIndexPlayerToPlay(0);
         
@@ -129,19 +129,24 @@ const Home: NextPage = () => {
         }
       })
 
-      // socket.on('dealerTurn', (dealerData: any) => {
-      //   let dealerToUpdate = dealer
-      //   (dealerToUpdate).cards.push(dealerData.pickedCard);
-      //   dealerToUpdate.cardsValue = dealerData.cardsValue;
+      socket.on('dealerTurn', (dealerData: any) => {
+        const dealerToUpdate: any = {cards: dealer.cards, cardsValue: dealer.cardsValue}
+        if(dealerToUpdate.cards) dealerToUpdate.cards.push(dealerData.pickedCard);
+        dealerToUpdate.cardsValue = dealerData.cardsValue;
 
-      //   setDealer(dealerToUpdate);
+        setDealer(dealerToUpdate)
 
-        // if(dealerToUpdate.cardsValue < 17) {
-        //   setTimeout(() => {
-        //     dealerAI()
-        //   }, 1000)
-        // }
-      // })
+        if(dealerToUpdate.cardsValue) {
+          if(dealerToUpdate.cardsValue < 17) {
+            setTimeout(() => {
+              dealerAI()
+            }, 1000)
+          } else if(dealerToUpdate.cardsValue > 21) {
+            dealerToUpdate.hasLost = true;
+            setDealer(dealerToUpdate);
+          }
+        }
+      })
     //#endregion
 
     //#region SERVER Players Event
@@ -217,7 +222,7 @@ const Home: NextPage = () => {
         body: JSON.stringify({playersObj, permissionPlayerID}),
       }); 
     }
-
+    
     // Permission Players
     const turnPermission = async (playersObj?: playerInterface, playersIDSocket?: string[]) => {
       if(!playersIDSocket && indexPlayerToPlay > playersID.length) {
@@ -236,17 +241,17 @@ const Home: NextPage = () => {
       }
     }
 
-    // const dealerAI = async () => {
-    //   const dealerData: dealerInterface = dealer;
+    const dealerAI = async () => {
+      const dealerData: dealerInterface = dealer;
 
-    //   const resp = await fetch("/api/dealerAI", {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify(dealerData),
-    //   }); 
-    // } 
+      const resp = await fetch("/api/dealerAI", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(dealerData),
+      }); 
+    } 
     //#endregion
 
   //#region CLIENT Players Event
@@ -289,42 +294,6 @@ const Home: NextPage = () => {
     }
   //#endregion
 
-  // const parentCallBack = (EventString: string): void => {
-  //   console.log("EventString " + EventString)
-  //   socket.emit('input-change', EventString)
-  // }
-
-  // // Create decks
-  // const num_decks = 3
-  // class Cards{
-  //   constructor(suit, rank){
-  //     this.rank = rank
-  //     this.suit = suit
-  //   }
-  // }
-  // class Deck{
-  //   constructor(){
-  //     let suits = ['Diamonds','Hearts','Spades','Clubs'];
-  //     let ranks = ['Ace','2','3','4','5','6','7','8','9','10','Jack','Queen','King']
-  //     this.cards = [];
-  //     for(let j=0;j<suits.length;j++){
-  //       for(let k=0;k<ranks.length;k++){
-  //         this.cards.push(new Cards(suits[j], ranks[k]))
-  //       }
-  //     }
-  //   }
-  // }
-  
-  // function createDecks(num_decks){
-  //   let deckArr = [];
-  //   for(let i=0;i<num_decks;i++){
-  //     deckArr.push(new Deck())
-  //   }
-  //   return deckArr;
-  // }
-  // let playDecks = createDecks(num_decks)
-  // console.log("playDecks :", playDecks[0])
-
   return (
     <div>
       <div className={styles.container}>
@@ -332,13 +301,12 @@ const Home: NextPage = () => {
         <Card rank={"10"} suit={"Hearts"} />
       </div>
       <div className='containerPlayer'>
+        <div>
+          <p>Dealer value : {(dealer as any).cardsValue}</p>
+        </div>
         {playersID.map((playerID: string): any => {
           return (
             <div>
-              {/* <div>
-                <p>DEALER</p>
-                <p>Dealer Cards Value : {(dealer as any).cardsValue.toString()}</p>
-              </div> */}
               <p>Cards Value : {(players as any)[playerID].cardsValue.toString()}</p>
               <div>
                 <Button playerID={playerID} bet={50} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 50, players)} />

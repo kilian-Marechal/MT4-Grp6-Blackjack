@@ -1,7 +1,6 @@
 import { NextApiRequest } from "next";
 import { NextApiResponseServerIO } from "../../src/utils/types";
 import { Server as ServerIO } from "socket.io";
-import { Server as NetServer } from "http";
 
 export const config = {
   api: {
@@ -21,7 +20,7 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseServerIO) => {
     res.socket.server.io = io
 
     io.on('connection', (socket: any) => {      
-      if(players[socket.id] == undefined) {
+      if(players[socket.id] == undefined && Object.keys(players).length < 4) {
         players[socket.id] = {socketID : socket.id, draw: false, cards: [], cardsValue: 0, money: 1000, bet: 0};
         io.emit('players', players)
         // console.log(players)
