@@ -3,19 +3,19 @@ import { NextApiResponseServerIO } from "../../src/utils/types";
 
 export default (req: NextApiRequest, res: NextApiResponseServerIO) => {
   if (req.method === "POST") {
-    // get message
-    const draw = req.body;
+    
+    const dealerData = req.body;
 
     const suits = ['Diamonds','Hearts','Spades','Clubs'];
     const ranks = ['Ace','2','3','4','5','6','7','8','9','10','Jack','Queen','King'] 
 
     const calculateValue = () => {
-      const pickedCardRank = draw.drawPlayer.pickedCard.rank;
+      const pickedCardRank = dealerData.pickedCard.rank;
       let cardValue: number = 0;
       let hasAce: boolean = false;
 
-      if(draw.playersObj[draw.drawPlayer.socketID].cards?.length > 0) {
-        if(draw.playersObj[draw.drawPlayer.socketID].cards.find((card: string,{}) => (card as any).rank == 'Ace') != undefined) {
+      if(dealerData.cards?.length > 0) {
+        if(dealerData.cards.find((card: string,{}) => (card as any).rank == 'Ace') != undefined) {
           hasAce = true;
         }
       }
@@ -53,17 +53,26 @@ export default (req: NextApiRequest, res: NextApiResponseServerIO) => {
       const card = {suit: suit, rank: rank}
 
       // Generated card
-      draw.drawPlayer.pickedCard = card;
+      dealerData.pickedCard = card;
+      dealerData.cards.push(card);
 
       // Value of player Cards
-      draw.drawPlayer.cardsValue = calculateValue();
+      dealerData.cardsValue = calculateValue();
     }
     randomDraw();
 
     // dispatch to channel "message"
-    res?.socket?.server?.io?.emit("drawPlayer", draw);
+    res?.socket?.server?.io?.emit("dealerTurn", dealerData);
+
+    // if(dealerData.cardsValue < 17) {
+    //   setInterval(() => {
+    //     randomDraw();
+
+    //     res?.socket?.server?.io?.emit("dealerTurn", dealerData);
+    //   }, 1500)
+    // }
 
     // return message
-    res.status(201).json(draw);
+    res.status(201).json(dealerData);
   }
 };

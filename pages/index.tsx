@@ -7,8 +7,6 @@ import { Card } from '../src/Components/Card'
 import { Button } from '../src/Components/Button'
 import { Player } from '../src/Components/Player'
 import { io } from "socket.io-client"
-import dealerAI from './api/dealerAI';
-// import SocketIOClient from "socket.io-client";
 let socket: any
 
 interface playerInterface {
@@ -113,7 +111,7 @@ const Home: NextPage = () => {
         } else if(permission.indexPlayerToPlay > Object.keys(permission.playersObj).length) {
           // End of the game, dealer turn
           setCanPlay(!canPlay);
-          dealerClientAI();
+          // dealerAI();
 
           setIndexPlayerToPlay(0);
         
@@ -130,6 +128,20 @@ const Home: NextPage = () => {
           drawCard(socket.id, true, startingDrawPlayers.playersObj, true)
         }
       })
+
+      // socket.on('dealerTurn', (dealerData: any) => {
+      //   let dealerToUpdate = dealer
+      //   (dealerToUpdate).cards.push(dealerData.pickedCard);
+      //   dealerToUpdate.cardsValue = dealerData.cardsValue;
+
+      //   setDealer(dealerToUpdate);
+
+        // if(dealerToUpdate.cardsValue < 17) {
+        //   setTimeout(() => {
+        //     dealerAI()
+        //   }, 1000)
+        // }
+      // })
     //#endregion
 
     //#region SERVER Players Event
@@ -222,21 +234,20 @@ const Home: NextPage = () => {
           body: JSON.stringify({playerID, indexPlayerToPlay: indexPlayerToPlay, canPlay: true, playersObj}),
         });
       }
-
-      const dealerClientAI = async () => {
-
-        const dealerData: dealerInterface = dealer;
-
-        const resp = await fetch("/api/dealerAI", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(dealerData),
-        }); 
-      } 
     }
-  //#endregion
+
+    // const dealerAI = async () => {
+    //   const dealerData: dealerInterface = dealer;
+
+    //   const resp = await fetch("/api/dealerAI", {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     body: JSON.stringify(dealerData),
+    //   }); 
+    // } 
+    //#endregion
 
   //#region CLIENT Players Event
     // DRAW
@@ -324,8 +335,11 @@ const Home: NextPage = () => {
         {playersID.map((playerID: string): any => {
           return (
             <div>
+              {/* <div>
+                <p>DEALER</p>
+                <p>Dealer Cards Value : {(dealer as any).cardsValue.toString()}</p>
+              </div> */}
               <p>Cards Value : {(players as any)[playerID].cardsValue.toString()}</p>
-              <p>Cards Value : {(players as any)[playerID].socketID}</p>
               <div>
                 <Button playerID={playerID} bet={50} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 50, players)} />
                 <Button playerID={playerID} bet={100} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 100, players)} />
