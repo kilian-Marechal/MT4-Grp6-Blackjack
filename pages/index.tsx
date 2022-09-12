@@ -17,7 +17,6 @@ interface playerInterface {
   cardsValue?: number,
   money?: number,
   bet?: number,
-  canPlay?: boolean
   playersObj?: {}
 }
 
@@ -28,7 +27,6 @@ const playerTemplate: playerInterface = {
   cardsValue: 0, 
   money: 1000, 
   bet: 0,
-  canPlay: false
 }
 
 interface interfaceDrawPlayer {
@@ -62,6 +60,8 @@ const Home: NextPage = () => {
   const [gameStarted, setGameStarted] = useState(false)
   const [everyPlayerBet, setEveryPlayerBet] = useState(false)
   const [everyPlayerPlayed, setEveryPlayerPlayed] = useState(false)
+  const [canPlay, setCanPlay] = useState(false);
+  const [indexPlayerToPlay, setIndexPlayerToPlay] = useState(0);
 
   useEffect(() => {
     socketInitializer()
@@ -71,116 +71,173 @@ const Home: NextPage = () => {
     await fetch('/api/socket')
     socket = io()
 
-    // Check id of the connected player
-    socket.on('connect', () => {
-      console.log("SOCKET CONNECTED!", socket.id);
-    })
+    //#region Server Event
+      // Check id of the connected player
+      socket.on('connect', () => {
+        console.log("SOCKET CONNECTED!", socket.id);
+      })
 
-    // Update when a player connect or disconnect
-    socket.on('players', (serverPlayers: playerInterface) => {
-      if(!gameStarted) {
-        const ids: string[] = Object.keys(serverPlayers)
-        setPlayersID(ids)
-        setPlayers(serverPlayers)
-      }
-    })
-
-    // Update players infos when there is a draw
-    socket.on('drawPlayer', (draw: any) => {
-      const updatePlayer: interfaceDrawPlayer = draw.drawPlayer;
-      const playersObj: playerInterface = draw.playersObj;
-
-      // Update Infos
-      (playersObj as any)[updatePlayer.socketID].draw = updatePlayer.draw;
-      (playersObj as any)[updatePlayer.socketID].cards.push(updatePlayer.pickedCard);
-      (playersObj as any)[updatePlayer.socketID].cardsValue += updatePlayer.cardsValue;
-      
-      setPlayers(playersObj)
-    })
-
-    socket.on('startGame', () => {
-      setGameStarted(true)
-    })
-
-    socket.on('permission', () => {
-
-    })
-
-    socket.on('betPlayer', (bet: any) => {
-      const betPlayerID: string = bet.betPlayer.playerID;
-      const betValue: number = bet.betPlayer.betValue;
-      const playersObj: playerInterface = bet.playersObj;
-      const playersObjIndex: string[] = Object.keys(playersObj);
-      let allPlayerBet: boolean = false;
-
-      // Update Infos
-      (playersObj as any)[betPlayerID].bet = betValue;
-      (playersObj as any)[betPlayerID].money -= betValue;
-
-      // Check if all players bet
-      for(let index = 0; index < playersObjIndex.length; index++) {
-        console.log((playersObj as any)[playersObjIndex[index]])
-        if((playersObj as any)[playersObjIndex[index]].bet === 0) {
-          allPlayerBet = false;
-          break;
-        } else {
-          allPlayerBet = true;
+      // Update when a player connect or disconnect
+      socket.on('players', (serverPlayers: playerInterface) => {
+        if(!gameStarted) {
+          const ids: string[] = Object.keys(serverPlayers)
+          setPlayersID(ids)
+          setPlayers(serverPlayers)
         }
-      }
+      })
+    //#endregion
 
-      if(allPlayerBet) setEveryPlayerBet(true);
+    //#region SERVER Game Events
+      socket.on('startGame', () => {
+        setGameStarted(true)
+      })
 
-      setPlayers(playersObj);
-    })
+      socket.on('permission', (permission: {playerID: string, indexPlayerToPlay: number, canPlay: boolean}) => {
+        if(socket.id === permission.playerID) {
+          setCanPlay(canPlay);
+        } else {
+          setCanPlay(!canPlay)
+        }
+        setIndexPlayerToPlay(permission.indexPlayerToPlay);
+      })
+
+      socket.on('startingDraw', (playersObj: playerInterface) => {
+        drawCard(socket.id, true, playersObj, true)
+      })
+    //#endregion
+
+    //#region SERVER Players Event
+      // Update players infos when there is a draw
+      socket.on('drawPlayer', (draw: any) => {
+        console.log('GameStarted')
+        const updatePlayer: interfaceDrawPlayer = draw.drawPlayer;
+        const playersObj: playerInterface = draw.playersObj;
+
+        // Update Infos
+        (playersObj as any)[updatePlayer.socketID].draw = updatePlayer.draw;
+        (playersObj as any)[updatePlayer.socketID].cards.push(updatePlayer.pickedCard);
+        (playersObj as any)[updatePlayer.socketID].cardsValue += updatePlayer.cardsValue;
+        
+        setPlayers(playersObj)
+      })
+
+      socket.on('betPlayer', (bet: any) => {
+        const betPlayerID: string = bet.betPlayer.playerID;
+        const betValue: number = bet.betPlayer.betValue;
+        const playersObj: playerInterface = bet.playersObj;
+        const playersObjIndex: string[] = Object.keys(playersObj);
+        let allPlayerBet: boolean = false;
+
+        // Update Infos
+        (playersObj as any)[betPlayerID].bet = betValue;
+        (playersObj as any)[betPlayerID].money -= betValue;
+
+        // Check if all players bet
+        for(let index = 0; index < playersObjIndex.length; index++) {
+          if((playersObj as any)[playersObjIndex[index]].bet === 0) {
+            allPlayerBet = false;
+            break;
+          } else {
+            allPlayerBet = true;
+          }
+        }
+
+        if(allPlayerBet) {
+          setEveryPlayerBet(true);
+          startingDraw(playersObj);
+          // turnPermission(playersObjIndex);
+        }
+
+        setPlayers(playersObj);
+      })
+    //#endregion
   }
 
-  // START
-  const startGame = async () => {
-    // Dispatch startGame to other users
-    const resp = await fetch("/api/startGame", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(true),
-    });
-  }
-
-  // DRAW
-  const drawCard = async (socketID: string, draw: boolean, playersObj: playerInterface): Promise<void> => {
-    if(draw) {
-      const drawPlayer: playerInterface = {
-        socketID,
-        draw,
-      }
-  
-      // Dispatch draw to other users
-      const resp = await fetch("/api/draw", {
+  //#region CLIENT Game Events
+    // START
+    const startGame = async () => {
+      // Dispatch startGame to other users
+      const resp = await fetch("/api/startGame", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({drawPlayer, playersObj}),
+        body: JSON.stringify(true),
       });
     }
-  };
 
-  // BET
-  const bet = async (playerID: string, betValue: number, playersObj: playerInterface) => {
-    const betPlayer = {
-      playerID,
-      betValue
+    // Starting Draw
+    const startingDraw  = async (playersObj: playerInterface): Promise<void> => {
+      console.log('into StartingDraw')
+      // Dispatch startingDraw to other users
+      const resp = await fetch("/api/startingDraw", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(playersObj),
+      }); 
     }
 
-    // Dispatch bet to other users
-    const resp = await fetch("/api/bet", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({betPlayer, playersObj}),
-    });
-  }
+    // Permission Players
+    const turnPermission = async (playersIDSocket?: string[]) => {
+      if(!playersIDSocket && indexPlayerToPlay === playersID.length) {
+        setCanPlay(false);
+        console.log('croupire')
+      } else {
+        const playerID = playersIDSocket? playersIDSocket[indexPlayerToPlay] : playersID[indexPlayerToPlay];
+    
+        // Dispatch permissions to other users
+        const resp = await fetch("/api/gamePermission", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({playerID, indexPlayerToPlay: indexPlayerToPlay, canPlay: true}),
+        });
+      }
+    }
+  //#endregion
+
+  //#region CLIENT Players Event
+    // DRAW
+    const drawCard = async (socketID: string, draw: boolean, playersObj: playerInterface, doubleDraw?: boolean): Promise<void> => {
+      if(draw) {
+        const drawPlayer: playerInterface = {
+          socketID,
+          draw,
+        }
+    
+        // Dispatch draw to other users
+        const resp = await fetch("/api/draw", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({drawPlayer, doubleDraw, playersObj}),
+        });
+      } else {
+        turnPermission();
+      }
+    };
+
+    // BET
+    const bet = async (playerID: string, betValue: number, playersObj: playerInterface) => {
+      const betPlayer = {
+        playerID,
+        betValue
+      }
+
+      // Dispatch bet to other users
+      const resp = await fetch("/api/bet", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({betPlayer, playersObj}),
+      });
+    }
+  //#endregion
 
   // const parentCallBack = (EventString: string): void => {
   //   console.log("EventString " + EventString)
@@ -229,14 +286,15 @@ const Home: NextPage = () => {
           return (
             <div>
               <p>Cards Value : {(players as any)[playerID].cardsValue.toString()}</p>
+              <p>Cards Value : {(players as any)[playerID].socketID}</p>
               <div>
-                <Button playerID={playerID} bet={50} disabled={(socket.id != playerID || !gameStarted)} functionTriggered={() => bet(socket.id, 50, players)} />
-                <Button playerID={playerID} bet={100} disabled={(socket.id != playerID || !gameStarted)} functionTriggered={() => bet(socket.id, 100, players)} />
-                <Button playerID={playerID} bet={200} disabled={(socket.id != playerID || !gameStarted)} functionTriggered={() => bet(socket.id, 200, players)} />
-                <Button playerID={playerID} bet={500} disabled={(socket.id != playerID || !gameStarted)} functionTriggered={() => bet(socket.id, 500, players)} />
+                <Button playerID={playerID} bet={50} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 50, players)} />
+                <Button playerID={playerID} bet={100} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 100, players)} />
+                <Button playerID={playerID} bet={200} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 200, players)} />
+                <Button playerID={playerID} bet={500} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 500, players)} />
               </div>
-              <Button playerID={playerID} draw={true} disabled={(socket.id != playerID || !everyPlayerBet)} functionTriggered={() => drawCard(socket.id, true, players)} />
-              <Button playerID={playerID} draw={false} disabled={(socket.id != playerID || !everyPlayerBet)} functionTriggered={() => drawCard(socket.id, false, players)} />
+              <Button playerID={playerID} draw={true} disabled={(socket.id != playerID || !everyPlayerBet || canPlay)} functionTriggered={() => drawCard(socket.id, true, players)} />
+              <Button playerID={playerID} draw={false} disabled={(socket.id != playerID || !everyPlayerBet || canPlay)} functionTriggered={() => drawCard(socket.id, false, players)} />
             </div>
             )}
           )}

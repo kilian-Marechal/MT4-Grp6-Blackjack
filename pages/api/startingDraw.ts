@@ -4,14 +4,12 @@ import { NextApiResponseServerIO } from "../../src/utils/types";
 export default (req: NextApiRequest, res: NextApiResponseServerIO) => {
   if (req.method === "POST") {
     
-    const permission = req.body
-
-    permission.indexPlayerToPlay += 1 
+    const players = req.body
 
     // dispatch to channel "message"
-    res?.socket?.server?.io?.emit("permission", permission);
+    res?.socket?.server?.io?.emit("startingDraw", players);
 
     // return message
-    res.status(201).json(permission);
+    res.status(201).json(players);
   }
 };
