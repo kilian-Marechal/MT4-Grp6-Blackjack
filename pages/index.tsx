@@ -4,6 +4,7 @@ import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 import { Card } from '../src/Components/Card'
+import { Button } from '../src/Components/Button'
 import { Player } from '../src/Components/Player'
 import { io } from "socket.io-client"
 // import SocketIOClient from "socket.io-client";
@@ -11,11 +12,32 @@ let socket: any
 
 interface playerInterface {
   socketID: string;
-  draw: boolean;
+  draw?: boolean;
   cards?: {}[];
   cardsValue?: number,
+  money?: number,
+  bet?: number,
+  canPlay?: boolean
   playersObj?: {}
 }
+
+const playerTemplate: playerInterface = {
+  socketID: "",
+  draw: false, 
+  cards: [], 
+  cardsValue: 0, 
+  money: 1000, 
+  bet: 0,
+  canPlay: false
+}
+
+interface interfaceDrawPlayer {
+  socketID: string, 
+  draw: boolean,
+  pickedCard: {}, 
+  cardsValue: number
+}
+
 
 const Home: NextPage = () => {
   // Game Logic
@@ -28,7 +50,7 @@ const Home: NextPage = () => {
   const [dealerCount, setDealerCount] = useState(0)
   const [playersCards, setPlayersCards] = useState([])
   const [playerCount, setPlayerCount] = useState(0)
-  const [players, setPlayers] = useState<playerInterface>({socketID: "", draw: false, cards: [], cardsValue: 0})
+  const [players, setPlayers] = useState<playerInterface>(playerTemplate)
   const [playersID, setPlayersID] = useState<string[]>([])
   const [isBlackjack, setIsBlackJack] = useState(false)
   const [isPlayerBusted, setIsPlayerBusted] = useState(false)
@@ -37,8 +59,9 @@ const Home: NextPage = () => {
   const [isDealerBusted, setIsDealerBusted] = useState(false)
   const [isHandComplete, setIsHandComplete] = useState(true)
   const [winner, setWinner] = useState("")
-  const [inputUpdate, setInputUpdate] = useState("")
-  const [draw, setDraw] = useState(false)
+  const [gameStarted, setGameStarted] = useState(false)
+  const [everyPlayerBet, setEveryPlayerBet] = useState(false)
+  const [everyPlayerPlayed, setEveryPlayerPlayed] = useState(false)
 
   useEffect(() => {
     socketInitializer()
@@ -48,55 +71,102 @@ const Home: NextPage = () => {
     await fetch('/api/socket')
     socket = io()
 
+    // Check id of the connected player
     socket.on('connect', () => {
       console.log("SOCKET CONNECTED!", socket.id);
     })
 
+    // Update when a player connect or disconnect
     socket.on('players', (serverPlayers: playerInterface) => {
-      const ids: string[] = Object.keys(serverPlayers)
-      setPlayersID(ids)
-      setPlayers(serverPlayers)
+      if(!gameStarted) {
+        const ids: string[] = Object.keys(serverPlayers)
+        setPlayersID(ids)
+        setPlayers(serverPlayers)
+      }
     })
 
+    // Update players infos when there is a draw
     socket.on('drawPlayer', (draw: any) => {
-      const updatePlayer = draw.drawPlayer;
-      const playersObj = draw.playersObj;
+      const updatePlayer: interfaceDrawPlayer = draw.drawPlayer;
+      const playersObj: playerInterface = draw.playersObj;
 
-      (playersObj as any)[updatePlayer.socketID] = updatePlayer;
-
-      console.log(playersObj)
+      // Update Infos
+      (playersObj as any)[updatePlayer.socketID].draw = updatePlayer.draw;
+      (playersObj as any)[updatePlayer.socketID].cards.push(updatePlayer.pickedCard);
+      (playersObj as any)[updatePlayer.socketID].cardsValue += updatePlayer.cardsValue;
+      
       setPlayers(playersObj)
     })
 
-    // socket.on('update-input', (msg: string) => {
-    //   setInputUpdate(msg)
-    // })
+    socket.on('startGame', () => {
+      setGameStarted(true)
+    })
+
+    socket.on('permission', () => {
+      
+    })
+
+    socket.on('betPlayer', (bet: any) => {
+      const betPlayerID: string = bet.betPlayer.playerID;
+      const betValue: number = bet.betPlayer.betValue;
+      const playersObj: playerInterface = bet.playersObj;
+
+      // Update Infos
+      (playersObj as any)[betPlayerID].bet = betValue;
+      (playersObj as any)[betPlayerID].money -= betValue;
+
+      setPlayers(playersObj);
+    })
   }
 
-  const drawCard = async (socketID: string, draw: boolean, playersObj: playerInterface) => {
-    console.log("into the draw")
-
-    const drawPlayer: playerInterface = {
-      socketID,
-      draw,
-    }
-
-    // Dispatch draw to other users
-    const resp = await fetch("/api/draw", {
+  // START
+  const startGame = async () => {
+    // Dispatch startGame to other users
+    const resp = await fetch("/api/startGame", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({drawPlayer, playersObj}),
+      body: JSON.stringify(true),
     });
+  }
 
-    if (resp.ok) {
-      console.log("resp ok")
-    } else {
-      console.log("resp is not okay")
+  // DRAW
+  const drawCard = async (socketID: string, draw: boolean, playersObj: playerInterface): Promise<void> => {
+    if(draw) {
+      const drawPlayer: playerInterface = {
+        socketID,
+        draw,
+      }
+  
+      // Dispatch draw to other users
+      const resp = await fetch("/api/draw", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({drawPlayer, playersObj}),
+      });
+    }
+  };
+
+  // BET
+  const bet = async (playerID: string, betValue: number, playersObj: playerInterface) => {
+    const betPlayer = {
+      playerID,
+      betValue
     }
 
-  };
+    // Dispatch bet to other users
+    const resp = await fetch("/api/bet", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({betPlayer, playersObj}),
+    });
+    setEveryPlayerBet(true);
+  }
 
   // const parentCallBack = (EventString: string): void => {
   //   console.log("EventString " + EventString)
@@ -137,30 +207,25 @@ const Home: NextPage = () => {
   return (
     <div>
       <div className={styles.container}>
+        <button disabled={gameStarted} onClick={startGame}>Start the game</button>
         <Card rank={"10"} suit={"Hearts"} />
       </div>
       <div className='containerPlayer'>
         {playersID.map((playerID: string): any => {
-            return (<div>
-              <p>{(players as any)[playerID].draw.toString()}</p>
-              <button
-              className={playerID}
-              disabled={socket.id != playerID}
-              onClick={() => {
-                drawCard(socket.id, true, players);
-              }}>Draw</button>
-              <button
-              className={playerID}
-              disabled={socket.id != playerID}
-              onClick={() => {
-                drawCard(socket.id, false, players);
-              }}>No draw</button>
+          return (
+            <div>
+              <p>Cards Value : {(players as any)[playerID].cardsValue.toString()}</p>
+              <div>
+                <Button playerID={playerID} bet={50} disabled={(socket.id != playerID || !gameStarted)} functionTriggered={() => bet(socket.id, 50, players)} />
+                <Button playerID={playerID} bet={100} disabled={(socket.id != playerID || !gameStarted)} functionTriggered={() => bet(socket.id, 100, players)} />
+                <Button playerID={playerID} bet={200} disabled={(socket.id != playerID || !gameStarted)} functionTriggered={() => bet(socket.id, 200, players)} />
+                <Button playerID={playerID} bet={500} disabled={(socket.id != playerID || !gameStarted)} functionTriggered={() => bet(socket.id, 500, players)} />
+              </div>
+              <Button playerID={playerID} draw={true} disabled={(socket.id != playerID || !everyPlayerBet)} functionTriggered={() => drawCard(socket.id, true, players)} />
+              <Button playerID={playerID} draw={false} disabled={(socket.id != playerID || !everyPlayerBet)} functionTriggered={() => drawCard(socket.id, false, players)} />
             </div>
             )}
           )}
-        {/* {playersID.map((playerID: string): any => {
-          return (<Player id={playerID} isDisabled={socket.id != playerID} updateValue={socket.id != playerID ? inputUpdate : null} inputChanges={parentCallBack} />)
-        })} */}
       </div>
     </div>
   )

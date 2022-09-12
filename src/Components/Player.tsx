@@ -25,7 +25,6 @@ export const Player = ({ id, isDisabled, updateValue, inputChanges }: PlayerProp
   }
 
   const clickButton = () => {
-    console.log('pute')
     inputChanges((inputText as any).value)
   }
 

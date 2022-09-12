@@ -18,8 +18,6 @@ export default (req: NextApiRequest, res: NextApiResponseServerIO) => {
         if(draw.playersObj[draw.drawPlayer.socketID].cards.find((card: string,{}) => (card as any).rank == 'Ace') != undefined) {
           hasAce = true;
         }
-
-        cardValue += draw.playersObj[draw.drawPlayer.socketID].cardsValue;
       }
       
       switch(pickedCardRank) {
@@ -54,8 +52,11 @@ export default (req: NextApiRequest, res: NextApiResponseServerIO) => {
       const rank = ranks[Math.floor(Math.random() * (ranks.length - 1))];
       const card = {suit: suit, rank: rank}
 
+      // Generated card
       draw.drawPlayer.pickedCard = card;
-      draw.drawPlayer.cardValue = calculateValue();
+
+      // Value of player Cards
+      draw.drawPlayer.cardsValue = calculateValue();
     }
     randomDraw();
 
