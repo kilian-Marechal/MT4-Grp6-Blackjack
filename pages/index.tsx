@@ -32,7 +32,7 @@ const playerTemplate: playerInterface = {
 interface interfaceDrawPlayer {
   socketID: string, 
   draw: boolean,
-  pickedCard: {}, 
+  pickedCard: {} | any, 
   cardsValue: number
 }
 
@@ -92,30 +92,45 @@ const Home: NextPage = () => {
         setGameStarted(true)
       })
 
-      socket.on('permission', (permission: {playerID: string, indexPlayerToPlay: number, canPlay: boolean}) => {
-        if(socket.id === permission.playerID) {
+      socket.on('permission', (permission: {playerID: string, indexPlayerToPlay: number, canPlay: boolean, playersObj: playerInterface}) => {       
+        if(socket.id === permission.playerID && permission.indexPlayerToPlay <= Object.keys(permission.playersObj).length) {
           setCanPlay(canPlay);
+          
+          if(socket.id === permission.playerID && (permission.playersObj as any)[socket.id].cards.length === 0) {
+            // Double draw at the beginning
+            startingDraw((permission.playersObj as any), permission.playerID);
+          }
+          setIndexPlayerToPlay(permission.indexPlayerToPlay);
+        } else if(permission.indexPlayerToPlay > Object.keys(permission.playersObj).length) {
+          setCanPlay(!canPlay)
+          console.log("croupier time")
+          setIndexPlayerToPlay(0);
         } else {
           setCanPlay(!canPlay)
+          setIndexPlayerToPlay(permission.indexPlayerToPlay);
         }
-        setIndexPlayerToPlay(permission.indexPlayerToPlay);
       })
 
-      socket.on('startingDraw', (playersObj: playerInterface) => {
-        drawCard(socket.id, true, playersObj, true)
+      socket.on('startingDraw', (startingDrawPlayers: {playersObj: playerInterface, permissionPlayerID: string}) => {
+        if(socket.id === startingDrawPlayers.permissionPlayerID) {
+          drawCard(socket.id, true, startingDrawPlayers.playersObj, true)
+        }
       })
     //#endregion
 
     //#region SERVER Players Event
       // Update players infos when there is a draw
       socket.on('drawPlayer', (draw: any) => {
-        console.log('GameStarted')
         const updatePlayer: interfaceDrawPlayer = draw.drawPlayer;
         const playersObj: playerInterface = draw.playersObj;
 
         // Update Infos
         (playersObj as any)[updatePlayer.socketID].draw = updatePlayer.draw;
-        (playersObj as any)[updatePlayer.socketID].cards.push(updatePlayer.pickedCard);
+        if(draw.doubleDraw) {
+          (playersObj as any)[updatePlayer.socketID].cards.push(...updatePlayer.pickedCard);
+        } else {
+          (playersObj as any)[updatePlayer.socketID].cards.push(updatePlayer.pickedCard);
+        }
         (playersObj as any)[updatePlayer.socketID].cardsValue += updatePlayer.cardsValue;
         
         setPlayers(playersObj)
@@ -144,8 +159,7 @@ const Home: NextPage = () => {
 
         if(allPlayerBet) {
           setEveryPlayerBet(true);
-          startingDraw(playersObj);
-          // turnPermission(playersObjIndex);
+          turnPermission(playersObj, playersObjIndex);
         }
 
         setPlayers(playersObj);
@@ -167,33 +181,31 @@ const Home: NextPage = () => {
     }
 
     // Starting Draw
-    const startingDraw  = async (playersObj: playerInterface): Promise<void> => {
-      console.log('into StartingDraw')
+    const startingDraw  = async (playersObj: playerInterface, permissionPlayerID: string): Promise<void> => {
       // Dispatch startingDraw to other users
       const resp = await fetch("/api/startingDraw", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(playersObj),
+        body: JSON.stringify({playersObj, permissionPlayerID}),
       }); 
     }
 
     // Permission Players
-    const turnPermission = async (playersIDSocket?: string[]) => {
-      if(!playersIDSocket && indexPlayerToPlay === playersID.length) {
-        setCanPlay(false);
-        console.log('croupire')
+    const turnPermission = async (playersObj?: playerInterface, playersIDSocket?: string[]) => {
+      if(!playersIDSocket && indexPlayerToPlay > playersID.length) {
+        console.log(canPlay)
       } else {
         const playerID = playersIDSocket? playersIDSocket[indexPlayerToPlay] : playersID[indexPlayerToPlay];
-    
+
         // Dispatch permissions to other users
         const resp = await fetch("/api/gamePermission", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({playerID, indexPlayerToPlay: indexPlayerToPlay, canPlay: true}),
+          body: JSON.stringify({playerID, indexPlayerToPlay: indexPlayerToPlay, canPlay: true, playersObj}),
         });
       }
     }
@@ -217,7 +229,7 @@ const Home: NextPage = () => {
           body: JSON.stringify({drawPlayer, doubleDraw, playersObj}),
         });
       } else {
-        turnPermission();
+        turnPermission(players);
       }
     };
 

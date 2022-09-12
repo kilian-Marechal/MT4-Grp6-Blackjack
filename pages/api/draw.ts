@@ -60,6 +60,24 @@ export default (req: NextApiRequest, res: NextApiResponseServerIO) => {
     }
     randomDraw();
 
+    if(draw.doubleDraw) {
+      let pickedCards: {}[] = [];
+      let finalValue: number = 0;
+
+      // Store the first draw
+      pickedCards.push(draw.drawPlayer.pickedCard);
+      finalValue += draw.drawPlayer.cardsValue;
+
+      // Second Draw
+      randomDraw();
+      pickedCards.push(draw.drawPlayer.pickedCard);
+      finalValue += draw.drawPlayer.cardsValue;
+
+      // Store the two draws with the correct value
+      draw.drawPlayer.pickedCard = pickedCards;
+      draw.drawPlayer.cardsValue = finalValue;      
+    }
+
     // dispatch to channel "message"
     res?.socket?.server?.io?.emit("drawPlayer", draw);
 

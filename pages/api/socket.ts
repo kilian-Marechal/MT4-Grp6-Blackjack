@@ -24,13 +24,13 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseServerIO) => {
       if(players[socket.id] == undefined) {
         players[socket.id] = {socketID : socket.id, draw: false, cards: [], cardsValue: 0, money: 1000, bet: 0};
         io.emit('players', players)
-        console.log(players)
+        // console.log(players)
       }
 
       socket.on('disconnect', () => {
         delete players[socket.id]
         io.emit('players', players)
-        console.log(players)
+        // console.log(players)
       })
 
       // socket.on('input-change', (msg: string) => {
