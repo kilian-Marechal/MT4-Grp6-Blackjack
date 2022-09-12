@@ -20,12 +20,6 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseServerIO) => {
     const io = new ServerIO((res.socket.server as any))
     res.socket.server.io = io
 
-    // const httpServer: NetServer = res.socket.server as any;
-    // const io = new ServerIO(httpServer, {
-    //   path: "/api/socket",
-    // });
-    // res.socket.server.io = io;
-
     io.on('connection', (socket: any) => {      
       if(players[socket.id] == undefined) {
         players[socket.id] = {socketID : socket.id, draw: false, cards: [], cardsValue: 0, money: 1000, bet: 0, canPlay: false};

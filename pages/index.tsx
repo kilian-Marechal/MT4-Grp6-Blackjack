@@ -103,17 +103,32 @@ const Home: NextPage = () => {
     })
 
     socket.on('permission', () => {
-      
+
     })
 
     socket.on('betPlayer', (bet: any) => {
       const betPlayerID: string = bet.betPlayer.playerID;
       const betValue: number = bet.betPlayer.betValue;
       const playersObj: playerInterface = bet.playersObj;
+      const playersObjIndex: string[] = Object.keys(playersObj);
+      let allPlayerBet: boolean = false;
 
       // Update Infos
       (playersObj as any)[betPlayerID].bet = betValue;
       (playersObj as any)[betPlayerID].money -= betValue;
+
+      // Check if all players bet
+      for(let index = 0; index < playersObjIndex.length; index++) {
+        console.log((playersObj as any)[playersObjIndex[index]])
+        if((playersObj as any)[playersObjIndex[index]].bet === 0) {
+          allPlayerBet = false;
+          break;
+        } else {
+          allPlayerBet = true;
+        }
+      }
+
+      if(allPlayerBet) setEveryPlayerBet(true);
 
       setPlayers(playersObj);
     })
@@ -165,7 +180,6 @@ const Home: NextPage = () => {
       },
       body: JSON.stringify({betPlayer, playersObj}),
     });
-    setEveryPlayerBet(true);
   }
 
   // const parentCallBack = (EventString: string): void => {
