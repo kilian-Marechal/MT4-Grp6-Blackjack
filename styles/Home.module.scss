@@ -7,7 +7,7 @@
     height: 100vh;
     max-width: 100vw;
     max-height: 100vh;
-    background: url("https://fr.freepik.com/photos-premium/texture-transparente-couverture-verte-table-poker_14208381.htm");
+    background-color: #32a852;
 
     .startButton {
         margin-top: 10vh;
@@ -42,13 +42,13 @@
         justify-content: center;
         align-items: flex-end;
         width: 100%;
-        border: 3px solid black;
+        border: 4px solid black;
         border-radius: 10px;
     
         .playerSubContainer {
             width: 100%;
             padding: 2% 2% 0% 4%;
-            border-right: 1px solid black;
+            border-right: 3px solid black;
     
             .cardsContainer {
                 height: 250px;

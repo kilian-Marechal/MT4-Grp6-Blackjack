@@ -21,7 +21,7 @@ export default (req: NextApiRequest, res: NextApiResponseServerIO) => {
       }
       
       switch(pickedCardRank) {
-        case 'Ace':
+        case 'A':
           hasAce ? cardValue = 10 : cardValue = 1;
           break;
 
@@ -36,10 +36,9 @@ export default (req: NextApiRequest, res: NextApiResponseServerIO) => {
         case '10':
           cardValue = parseInt(pickedCardRank);
           break;
-
-        case 'Jack':
-        case 'Queen':
-        case 'King':
+        case 'J':
+        case 'Q':
+        case 'K':
           cardValue = 10;
           break;
       }
