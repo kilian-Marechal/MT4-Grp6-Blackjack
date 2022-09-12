@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import { Color, Rank, Suit } from "../utils/types";
+import { Rank, Suit } from "../utils/types";
 
 interface CardProps {
     rank: Rank;
