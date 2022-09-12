@@ -7,6 +7,7 @@ import { Card } from '../src/Components/Card'
 import { Button } from '../src/Components/Button'
 import { Player } from '../src/Components/Player'
 import { io } from "socket.io-client"
+import dealerAI from './api/dealerAI';
 // import SocketIOClient from "socket.io-client";
 let socket: any
 
@@ -27,6 +28,11 @@ const playerTemplate: playerInterface = {
   cardsValue: 0, 
   money: 1000, 
   bet: 0,
+}
+
+interface dealerInterface {
+  cards?: {}[];
+  cardsValue?: number,
 }
 
 interface interfaceDrawPlayer {
@@ -50,6 +56,7 @@ const Home: NextPage = () => {
   const [playerCount, setPlayerCount] = useState(0)
   const [players, setPlayers] = useState<playerInterface>(playerTemplate)
   const [playersID, setPlayersID] = useState<string[]>([])
+  const [dealer, setDealer] = useState<dealerInterface>({cards: [], cardsValue: 0})
   const [isBlackjack, setIsBlackJack] = useState(false)
   const [isPlayerBusted, setIsPlayerBusted] = useState(false)
   const [didDouble, setDidDouble] = useState(false)
@@ -95,18 +102,25 @@ const Home: NextPage = () => {
       socket.on('permission', (permission: {playerID: string, indexPlayerToPlay: number, canPlay: boolean, playersObj: playerInterface}) => {       
         if(socket.id === permission.playerID && permission.indexPlayerToPlay <= Object.keys(permission.playersObj).length) {
           setCanPlay(canPlay);
-          
+
+          // Double draw at the beginning
           if(socket.id === permission.playerID && (permission.playersObj as any)[socket.id].cards.length === 0) {
-            // Double draw at the beginning
             startingDraw((permission.playersObj as any), permission.playerID);
           }
+
           setIndexPlayerToPlay(permission.indexPlayerToPlay);
+        
         } else if(permission.indexPlayerToPlay > Object.keys(permission.playersObj).length) {
-          setCanPlay(!canPlay)
-          console.log("croupier time")
+          // End of the game, dealer turn
+          setCanPlay(!canPlay);
+          dealerClientAI();
+
           setIndexPlayerToPlay(0);
+        
         } else {
+          // Not your turn, you don't play
           setCanPlay(!canPlay)
+
           setIndexPlayerToPlay(permission.indexPlayerToPlay);
         }
       })
@@ -181,7 +195,7 @@ const Home: NextPage = () => {
     }
 
     // Starting Draw
-    const startingDraw  = async (playersObj: playerInterface, permissionPlayerID: string): Promise<void> => {
+    const startingDraw = async (playersObj: playerInterface, permissionPlayerID: string): Promise<void> => {
       // Dispatch startingDraw to other users
       const resp = await fetch("/api/startingDraw", {
         method: "POST",
@@ -208,6 +222,19 @@ const Home: NextPage = () => {
           body: JSON.stringify({playerID, indexPlayerToPlay: indexPlayerToPlay, canPlay: true, playersObj}),
         });
       }
+
+      const dealerClientAI = async () => {
+
+        const dealerData: dealerInterface = dealer;
+
+        const resp = await fetch("/api/dealerAI", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(dealerData),
+        }); 
+      } 
     }
   //#endregion
 
