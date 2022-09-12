@@ -306,14 +306,16 @@ const Home: NextPage = () => {
                 })}
               </div>
               <p>Total Value : {(players as any)[playerID].cardsValue.toString()}</p>
-              <div>
+              <div className={styles.buttonContainer}>
                 <Button playerID={playerID} bet={50} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 50, players)} />
                 <Button playerID={playerID} bet={100} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 100, players)} />
                 <Button playerID={playerID} bet={200} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 200, players)} />
                 <Button playerID={playerID} bet={500} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 500, players)} />
               </div>
-              <Button playerID={playerID} draw={true} disabled={(socket.id != playerID || !everyPlayerBet || canPlay)} functionTriggered={() => drawCard(socket.id, true, players)} />
-              <Button playerID={playerID} draw={false} disabled={(socket.id != playerID || !everyPlayerBet || canPlay)} functionTriggered={() => drawCard(socket.id, false, players)} />
+              <div className={styles.buttonContainer}>
+                <Button playerID={playerID} draw={true} disabled={(socket.id != playerID || !everyPlayerBet || canPlay)} functionTriggered={() => drawCard(socket.id, true, players)} />
+                <Button playerID={playerID} draw={false} disabled={(socket.id != playerID || !everyPlayerBet || canPlay)} functionTriggered={() => drawCard(socket.id, false, players)} />
+              </div>
             </div>
             )}
           )}

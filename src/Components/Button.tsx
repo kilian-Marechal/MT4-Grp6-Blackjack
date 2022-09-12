@@ -14,7 +14,7 @@ export const Button = (props: ButtonProps) => {
   const { playerID, draw, bet, disabled, functionTriggered } = props;
 
   return (
-    <div>
+    <StyledButton>
       {bet == undefined ?
       (
         <button disabled={disabled} onClick={functionTriggered}>
@@ -27,10 +27,10 @@ export const Button = (props: ButtonProps) => {
         </button>
       )
     }
-    </div>
+    </StyledButton>
   )
 };
 
-const ButtonDraw = styled.button`
-  
+const StyledButton = styled.div`
+  margin-right: 8px;
 `;
