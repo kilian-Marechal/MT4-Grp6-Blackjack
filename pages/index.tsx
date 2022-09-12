@@ -302,7 +302,7 @@ const Home: NextPage = () => {
               <p>Player : {index}</p>
               <div className={styles.cardsContainer}>
                 {(players as any)[playerID].cards.map((card: {suit:string, rank:string}): any => {
-                  return (<Card playerID={playerID} index={index} suit={card.suit} rank={card.rank}/>)
+                  return (<Card suit={card.suit} rank={card.rank}/>)
                 })}
               </div>
               <p>Total Value : {(players as any)[playerID].cardsValue.toString()}</p>
