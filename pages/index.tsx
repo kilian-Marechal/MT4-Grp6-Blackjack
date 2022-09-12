@@ -306,6 +306,7 @@ const Home: NextPage = () => {
                 })}
               </div>
               <p>Total Value : {(players as any)[playerID].cardsValue.toString()}</p>
+              <p>Bet : {(players as any)[playerID].bet.toString()}</p>
               <div className={styles.buttonContainer}>
                 <Button playerID={playerID} bet={50} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 50, players)} />
                 <Button playerID={playerID} bet={100} disabled={(socket.id != playerID || !gameStarted || everyPlayerBet)} functionTriggered={() => bet(socket.id, 100, players)} />
